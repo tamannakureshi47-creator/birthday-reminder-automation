@@ -1,0 +1,341 @@
+{
+  "name": "Birthday Reminder",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        224,
+        368
+      ],
+      "id": "8d90f8e0-4348-4749-92a0-83df14477ea9",
+      "name": "WhatsApp Trigger",
+      "webhookId": "0eeab913-19a6-41de-9302-4f843de4840b",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "B7r8OZAwjwRlJHJB",
+          "name": "WhatsApp OAuth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -544,
+        176
+      ],
+      "id": "d47e5dc1-4890-4093-a871-e1c89f0ac91e",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "142QGCNbazdEEou-H3QIBevSKoz-atYpV2H3qnp3ktpo",
+          "mode": "list",
+          "cachedResultName": "Birthday Reminder",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/142QGCNbazdEEou-H3QIBevSKoz-atYpV2H3qnp3ktpo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/142QGCNbazdEEou-H3QIBevSKoz-atYpV2H3qnp3ktpo/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -352,
+        176
+      ],
+      "id": "85ed770d-2db7-49f5-a8ce-e568d5e74b19",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3lmvXJaU8zbROpOt",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const today = new Date();\n\nconst todayDayMonth =\n    String(today.getDate()).padStart(2, '0') +\n    '-' +\n    String(today.getMonth() + 1).padStart(2, '0');\n\nconst result = [];\n\nfor (const item of $input.all()) {\n\n    const birthday = item.json[\"Birthday\"];\n    const wishSent = item.json[\"Wish Sent\"];\n\n    // Birthday ka DD-MM part\n    const birthdayDayMonth = birthday.substring(0, 5);\n\n    // Birthday aaj hai aur wish abhi send nahi hua\n    if (\n        birthdayDayMonth === todayDayMonth &&\n        wishSent === \"No\"\n    ) {\n        result.push(item);\n    }\n}\n\nreturn result;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -192,
+        176
+      ],
+      "id": "244eb562-e443-4505-8387-afa80ec30751",
+      "name": "Code in JavaScript",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "= {{ $json.Name }}",
+        "options": {
+          "systemMessage": "=You are a professional birthday wish assistant.\n\nYour task is to generate a short, warm, and personalized birthday wish for the person.\n\nThe person's name is: {{ $json.Name }}\n\nGenerate a friendly and natural birthday message using the person's name.\n\nRequirements:\n- Keep the message short and meaningful.\n- Maximum 50 words.\n- Use 2-3 suitable emojis.\n- Do not mention that you are an AI.\n- Do not add explanations.\n- Return only the final birthday wish.\n- Make every wish sound warm and personal.\n\nExample:\nHappy Birthday, Fenal! 🎉🎂\nWishing you a wonderful day filled with happiness, love, and beautiful moments. May this year bring you lots of success and joy! ✨"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -16,
+        176
+      ],
+      "id": "c4e38616-2206-48f9-baaa-fdcd4b75831c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -16,
+        384
+      ],
+      "id": "d9096f09-0f10-45f2-923c-99bf9a499dd5",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1328299740370725",
+        "recipientPhoneNumber": "+919054548041",
+        "textBody": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        288,
+        176
+      ],
+      "id": "0a115368-25f3-4117-a558-c507de35e5a7",
+      "name": "Send message",
+      "webhookId": "a6ef932b-81d5-4bea-8c79-28f40489f0ba",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "XDoFreI411AFjHF3",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "142QGCNbazdEEou-H3QIBevSKoz-atYpV2H3qnp3ktpo",
+          "mode": "list",
+          "cachedResultName": "Birthday Reminder",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/142QGCNbazdEEou-H3QIBevSKoz-atYpV2H3qnp3ktpo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/142QGCNbazdEEou-H3QIBevSKoz-atYpV2H3qnp3ktpo/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Wish Sent": "YES",
+            "Name": "={{ $('Get row(s) in sheet').first().json.Name }}",
+            "Phone": "={{ $('Get row(s) in sheet').first().json.Phone }}",
+            "Birthday": "={{ $('Get row(s) in sheet').first().json.Birthday }}",
+            "Birthday Wish": "={{ $('AI Agent').item.json.output }}"
+          },
+          "matchingColumns": [
+            "Phone"
+          ],
+          "schema": [
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Birthday",
+              "displayName": "Birthday",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone",
+              "displayName": "Phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Wish Sent",
+              "displayName": "Wish Sent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Birthday Wish",
+              "displayName": "Birthday Wish",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        480,
+        176
+      ],
+      "id": "ac61e40a-f5b1-47c7-99e2-e4a6b9e15fb1",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "3lmvXJaU8zbROpOt",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "e1b3bd98-1f40-43ff-9944-c398729b98ed",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "21d02718434ae09b21747f5d42a2ea3c629a6380ec19c87a7a9e6edb78dc3e92"
+  },
+  "nodeGroups": [],
+  "id": "IUhwh5L67lcCJxrI",
+  "tags": []
+}
